@@ -3,21 +3,50 @@ import Icon from "@/components/ui/icon";
 
 type Section = "profile" | "subscriptions" | "support";
 
-const SUBSCRIPTIONS = [
+const PLANS = [
   {
-    id: 1, name: "Логоша Старт", price: "490 ₽", period: "в месяц",
-    status: "active", expires: "01.06.2026",
-    features: ["50 уроков", "Базовые материалы", "Email поддержка"],
-    gradient: "linear-gradient(135deg, #f97316 0%, #fb923c 100%)",
+    id: "trial", name: "Пробный", emoji: "🌱",
+    priceMonth: 0, priceYear: 0,
+    gradient: "linear-gradient(135deg, #6ee7b7, #34d399)",
+    glow: "rgba(52,211,153,0.25)",
+    color: "#059669",
+    features: ["5 уроков", "Базовые материалы", "Email поддержка"],
+    popular: false,
+  },
+  {
+    id: "start", name: "Старт", emoji: "⭐",
+    priceMonth: 490, priceYear: 3900,
+    gradient: "linear-gradient(135deg, #f97316, #fb923c)",
     glow: "rgba(249,115,22,0.25)",
+    color: "#f97316",
+    features: ["50 уроков", "Все базовые материалы", "Email поддержка", "Прогресс ребёнка"],
+    popular: false,
   },
   {
-    id: 2, name: "Логоша Про", price: "990 ₽", period: "в месяц",
-    status: "inactive", expires: "—",
-    features: ["Все уроки", "Эксклюзивный контент", "Приоритетная поддержка"],
-    gradient: "linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)",
-    glow: "rgba(139,92,246,0.25)",
+    id: "premium", name: "Премиум", emoji: "👑",
+    priceMonth: 890, priceYear: 7900,
+    gradient: "linear-gradient(135deg, #f97316 0%, #fbbf24 100%)",
+    glow: "rgba(249,115,22,0.3)",
+    color: "#f97316",
+    features: ["Все уроки", "Эксклюзивный контент", "Приоритетная поддержка", "100 ГБ хранилища", "Оффлайн доступ"],
+    popular: true,
   },
+  {
+    id: "pro", name: "Про", emoji: "🚀",
+    priceMonth: 1490, priceYear: 13900,
+    gradient: "linear-gradient(135deg, #8b5cf6, #a78bfa)",
+    glow: "rgba(139,92,246,0.25)",
+    color: "#8b5cf6",
+    features: ["Всё из Премиум", "Несколько детей", "Персональный куратор", "API доступ", "Ранний доступ к новинкам"],
+    popular: false,
+  },
+];
+
+const PAYMENTS = [
+  { date: "11 апр 2026", amount: "890 ₽", plan: "Премиум", status: "success" },
+  { date: "11 мар 2026", amount: "890 ₽", plan: "Премиум", status: "success" },
+  { date: "11 фев 2026", amount: "490 ₽", plan: "Старт", status: "success" },
+  { date: "11 янв 2026", amount: "490 ₽", plan: "Старт", status: "success" },
 ];
 
 const STATS = [
@@ -37,6 +66,13 @@ export default function Index() {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [supportMessage, setSupportMessage] = useState("");
   const [supportTopic, setSupportTopic] = useState("");
+  const [billingCycle, setBillingCycle] = useState<"month" | "year">("month");
+  const [showPayments, setShowPayments] = useState(false);
+  const activePlan = PLANS.find(p => p.id === "premium")!;
+  const daysTotal = 61;
+  const daysLeft = 30;
+  const daysUsed = daysTotal - daysLeft;
+  const progressPct = Math.round((daysUsed / daysTotal) * 100);
 
   const navItems = [
     { id: "profile" as Section, label: "Мои данные", icon: "User" },
@@ -328,77 +364,216 @@ export default function Index() {
           {/* МОИ ПОДПИСКИ */}
           {activeSection === "subscriptions" && (
             <div>
-              <div style={{ marginBottom: 24 }}>
-                <h1 style={{ fontSize: 26, fontWeight: 900, fontFamily: "'Montserrat', sans-serif", color: "#1a1208", margin: 0 }}>Мои подписки</h1>
-                <p style={{ fontSize: 13, color: "#b8a898", marginTop: 4 }}>Управляйте тарифами и доступом к материалам</p>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+                <div>
+                  <h1 style={{ fontSize: 26, fontWeight: 900, fontFamily: "'Montserrat', sans-serif", color: "#1a1208", margin: 0 }}>Мои подписки</h1>
+                  <p style={{ fontSize: 13, color: "#b8a898", marginTop: 4 }}>Управляйте тарифом, просматривайте детали и получайте максимум от Логоши</p>
+                </div>
+                <button
+                  onClick={() => setShowPayments(!showPayments)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 14, border: "1.5px solid #f0e6d3", backgroundColor: "#fff", fontSize: 13, fontWeight: 600, color: "#5a4535", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#f97316"; (e.currentTarget as HTMLButtonElement).style.color = "#f97316"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#f0e6d3"; (e.currentTarget as HTMLButtonElement).style.color = "#5a4535"; }}>
+                  <Icon name="Receipt" size={15} />
+                  История платежей
+                </button>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20, marginBottom: 24 }}>
-                {SUBSCRIPTIONS.map((sub) => (
-                  <div key={sub.id} style={{ borderRadius: 24, overflow: "hidden", boxShadow: `0 4px 28px ${sub.glow}`, position: "relative" }}>
-                    <div style={{ background: sub.gradient, padding: "24px 24px 20px", position: "relative", overflow: "hidden" }}>
-                      <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.1)" }} />
-                      <div style={{ position: "absolute", bottom: -20, left: 20, width: 80, height: 80, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.06)" }} />
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative" }}>
-                        <div>
-                          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", fontFamily: "'Montserrat', sans-serif" }}>{sub.name}</div>
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 5, marginTop: 8 }}>
-                            <span style={{ fontSize: 30, fontWeight: 900, color: "#fff" }}>{sub.price}</span>
-                            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{sub.period}</span>
-                          </div>
+              {/* История платежей (collapse) */}
+              {showPayments && (
+                <div style={{ borderRadius: 20, backgroundColor: "#fff", boxShadow: "0 2px 20px rgba(0,0,0,0.07)", marginBottom: 20, overflow: "hidden" }}>
+                  <div style={{ padding: "16px 20px", borderBottom: "1px solid #f5ede0", display: "flex", alignItems: "center", gap: 10 }}>
+                    <Icon name="Receipt" size={16} style={{ color: "#f97316" }} />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: "#1a1208" }}>История платежей</span>
+                  </div>
+                  {PAYMENTS.map((p, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: i < PAYMENTS.length - 1 ? "1px solid #f5ede0" : "none" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: "#fff7ed", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Icon name="CreditCard" size={15} style={{ color: "#f97316" }} />
                         </div>
-                        <span style={{
-                          padding: "5px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                          backgroundColor: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", color: "#fff",
-                          border: "1px solid rgba(255,255,255,0.3)"
-                        }}>
-                          {sub.status === "active" ? "✓ Активна" : "Неактивна"}
-                        </span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1208" }}>{p.plan}</div>
+                          <div style={{ fontSize: 11, color: "#b8a898" }}>{p.date}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: "#1a1208" }}>{p.amount}</span>
+                        <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600, backgroundColor: "#ecfdf5", color: "#059669" }}>✓ Оплачено</span>
                       </div>
                     </div>
-                    <div style={{ backgroundColor: "#fff", padding: "20px 24px" }}>
-                      {sub.features.map((f) => (
-                        <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                          <div style={{ width: 18, height: 18, borderRadius: "50%", background: sub.id === 1 ? "linear-gradient(135deg, #f97316, #fb923c)" : "linear-gradient(135deg, #8b5cf6, #a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <Icon name="Check" size={10} style={{ color: "#fff" }} />
-                          </div>
-                          <span style={{ fontSize: 13, color: "#5a4535" }}>{f}</span>
-                        </div>
-                      ))}
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, marginBottom: 16, fontSize: 12, color: "#b8a898" }}>
-                        <Icon name="Calendar" size={13} />
-                        <span>До: {sub.expires}</span>
+                  ))}
+                </div>
+              )}
+
+              {/* Активная подписка — большая карточка */}
+              <div style={{ borderRadius: 24, overflow: "hidden", boxShadow: "0 8px 40px rgba(249,115,22,0.25)", marginBottom: 24, position: "relative" }}>
+                <div style={{ background: activePlan.gradient, padding: "28px 28px 24px", position: "relative", overflow: "hidden" }}>
+                  {/* Декоративные круги */}
+                  <div style={{ position: "absolute", top: -50, right: -50, width: 200, height: 200, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.08)" }} />
+                  <div style={{ position: "absolute", bottom: -30, left: -20, width: 140, height: 140, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.06)" }} />
+                  <div style={{ position: "absolute", top: 20, right: 120, width: 60, height: 60, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.05)" }} />
+
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, position: "relative" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <div style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.2)", backdropFilter: "blur(10px)", border: "2px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>
+                        {activePlan.emoji}
                       </div>
-                      {sub.status === "active" ? (
-                        <button style={{ width: "100%", padding: "11px", borderRadius: 14, border: "1.5px solid #fde8e8", backgroundColor: "#fff5f5", color: "#e57373", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#fde8e8"; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#fff5f5"; }}>
-                          Отменить подписку
-                        </button>
-                      ) : (
-                        <button style={{ width: "100%", padding: "11px", borderRadius: 14, background: sub.gradient, color: "#fff", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", boxShadow: `0 4px 14px ${sub.glow}`, transition: "all 0.2s" }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"; }}>
-                          Подключить →
-                        </button>
-                      )}
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <span style={{ fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "'Montserrat', sans-serif" }}>{activePlan.name}</span>
+                          <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, backgroundColor: "rgba(255,255,255,0.25)", color: "#fff", border: "1px solid rgba(255,255,255,0.4)" }}>Активен</span>
+                        </div>
+                        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", marginTop: 4 }}>Максимальный доступ ко всем материалам и платформам</div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                        <span style={{ fontSize: 36, fontWeight: 900, color: "#fff", fontFamily: "'Montserrat', sans-serif" }}>890</span>
+                        <span style={{ fontSize: 14, color: "rgba(255,255,255,0.75)" }}>₽/месяц</span>
+                      </div>
                     </div>
                   </div>
-                ))}
+
+                  {/* Даты */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginTop: 24, position: "relative" }}>
+                    {[
+                      { label: "Дата приобретения", value: "11 апреля 2026" },
+                      { label: "Дата окончания", value: "11 июня 2026" },
+                      { label: "Дней до окончания", value: `${daysLeft} дней` },
+                    ].map((item) => (
+                      <div key={item.label}>
+                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>{item.label}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", fontFamily: "'Montserrat', sans-serif" }}>{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Нижняя часть карточки */}
+                <div style={{ backgroundColor: "#fff", padding: "20px 28px 24px" }}>
+                  {/* Прогресс */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#5a4535" }}>Подписка активна</span>
+                    <span style={{ fontSize: 12, color: "#b8a898" }}>Осталось {daysLeft} дней</span>
+                  </div>
+                  <div style={{ height: 8, borderRadius: 8, backgroundColor: "#f5ede0", overflow: "hidden", marginBottom: 8 }}>
+                    <div style={{ height: "100%", width: `${progressPct}%`, background: "linear-gradient(90deg, #f97316, #fbbf24)", borderRadius: 8, transition: "width 0.5s ease" }} />
+                  </div>
+                  <div style={{ fontSize: 12, color: "#b8a898", marginBottom: 20 }}>Мы напомним о продлении за 3 дня до окончания срока</div>
+
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <button style={{ padding: "13px 24px", borderRadius: 14, background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff", fontSize: 14, fontWeight: 700, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(249,115,22,0.4)", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 8 }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 22px rgba(249,115,22,0.5)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 16px rgba(249,115,22,0.4)"; }}>
+                      <Icon name="Zap" size={15} />
+                      Продлить подписку
+                    </button>
+                    <button style={{ padding: "13px 24px", borderRadius: 14, border: "1.5px solid #f0e6d3", backgroundColor: "#faf4ec", color: "#5a4535", fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#f97316"; (e.currentTarget as HTMLButtonElement).style.color = "#f97316"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#f0e6d3"; (e.currentTarget as HTMLButtonElement).style.color = "#5a4535"; }}>
+                      Сменить тариф
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Promo */}
-              <div style={{ borderRadius: 24, padding: "24px 28px", background: "linear-gradient(135deg, #1a1208 0%, #2d1e0a 100%)", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", gap: 20 }}>
-                <div style={{ position: "absolute", top: -40, right: -40, width: 180, height: 180, borderRadius: "50%", background: "radial-gradient(circle, rgba(249,115,22,0.2), transparent)" }} />
-                <div style={{ position: "absolute", bottom: -30, left: 100, width: 120, height: 120, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.15), transparent)" }} />
-                <div style={{ fontSize: 48, flexShrink: 0, position: "relative" }}>🦕</div>
-                <div style={{ position: "relative" }}>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", fontFamily: "'Montserrat', sans-serif" }}>Попробуй Логоша Про!</div>
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginTop: 4 }}>Полный доступ ко всем материалам без ограничений</div>
+              {/* Что входит в тариф */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: "#1a1208", fontFamily: "'Montserrat', sans-serif" }}>Что входит в ваш тариф</span>
+                  <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: "linear-gradient(135deg, #fff7ed, #ffedd5)", color: "#f97316", border: "1px solid #fed7aa" }}>
+                    {activePlan.emoji} {activePlan.name}-возможности
+                  </span>
                 </div>
-                <button style={{ marginLeft: "auto", flexShrink: 0, padding: "12px 22px", borderRadius: 14, background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff", fontSize: 14, fontWeight: 700, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(249,115,22,0.4)", position: "relative", whiteSpace: "nowrap" }}>
-                  Попробовать бесплатно
-                </button>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
+                  {[
+                    { icon: "Cloud", label: "100 ГБ", sub: "Облачного хранилища", desc: "Храните все ваши материалы в безопасности", color: "#3b82f6", bg: "#eff6ff", emoji: "☁️" },
+                    { icon: "Play", label: "Доступ ко всем материалам", sub: "", desc: "Полный доступ ко всем материалам и играм", color: "#8b5cf6", bg: "#f5f3ff", emoji: "▶️" },
+                    { icon: "Zap", label: "Приоритетная поддержка", sub: "", desc: "Ваши запросы обрабатываются в первую очередь", color: "#f59e0b", bg: "#fffbeb", emoji: "⚡" },
+                    { icon: "Trophy", label: "Достижения", sub: "", desc: "Система наград и мотивации для ребёнка", color: "#f97316", bg: "#fff7ed", emoji: "🏆" },
+                  ].map((item) => (
+                    <div key={item.label} style={{ borderRadius: 20, padding: "20px 18px", backgroundColor: "#fff", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", border: "1px solid #f5ede0", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 2px 16px rgba(0,0,0,0.06)"; }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: item.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 14 }}>
+                        {item.emoji}
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1208", lineHeight: 1.3, marginBottom: 6 }}>{item.label}{item.sub && <><br /><span style={{ color: item.color }}>{item.sub}</span></>}</div>
+                      <div style={{ fontSize: 12, color: "#b8a898", lineHeight: 1.5 }}>{item.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Сменить тариф — все планы */}
+              <div style={{ borderRadius: 24, padding: "24px", backgroundColor: "#fff", boxShadow: "0 2px 20px rgba(0,0,0,0.07)", border: "1px solid rgba(249,115,22,0.08)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: "#fff7ed", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon name="RefreshCw" size={15} style={{ color: "#f97316" }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1208" }}>Хотите попробовать другой тариф?</div>
+                      <div style={{ fontSize: 12, color: "#b8a898" }}>Вы можете в любой момент перейти на другой тариф</div>
+                    </div>
+                  </div>
+                  {/* Переключатель месяц / год */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 0, borderRadius: 14, border: "1.5px solid #f0e6d3", overflow: "hidden", backgroundColor: "#faf4ec" }}>
+                    {(["month", "year"] as const).map((cycle) => (
+                      <button key={cycle} onClick={() => setBillingCycle(cycle)}
+                        style={{ padding: "8px 18px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", transition: "all 0.2s",
+                          ...(billingCycle === cycle
+                            ? { background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff", borderRadius: 11 }
+                            : { backgroundColor: "transparent", color: "#8a7a6a" })
+                        }}>
+                        {cycle === "month" ? "Месяц" : "Год −20%"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+                  {PLANS.map((plan) => {
+                    const isActive = plan.id === activePlan.id;
+                    const price = billingCycle === "month" ? plan.priceMonth : Math.round(plan.priceYear / 12);
+                    return (
+                      <div key={plan.id} style={{ borderRadius: 18, overflow: "hidden", border: isActive ? `2px solid #f97316` : "1.5px solid #f0e6d3", position: "relative", transition: "all 0.2s" }}
+                        onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.borderColor = "#f97316"; }}
+                        onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLDivElement).style.borderColor = "#f0e6d3"; }}>
+                        {plan.popular && (
+                          <div style={{ background: "linear-gradient(90deg, #f97316, #fbbf24)", padding: "4px 0", textAlign: "center", fontSize: 10, fontWeight: 700, color: "#fff", letterSpacing: "0.06em" }}>⭐ ПОПУЛЯРНЫЙ</div>
+                        )}
+                        <div style={{ padding: "16px" }}>
+                          <div style={{ fontSize: 20, marginBottom: 6 }}>{plan.emoji}</div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: "#1a1208", marginBottom: 4, fontFamily: "'Montserrat', sans-serif" }}>{plan.name}</div>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 12 }}>
+                            <span style={{ fontSize: 20, fontWeight: 900, color: plan.color }}>{price === 0 ? "Бесплатно" : price + " ₽"}</span>
+                            {price > 0 && <span style={{ fontSize: 11, color: "#b8a898" }}>/мес</span>}
+                          </div>
+                          {plan.features.slice(0, 3).map((f) => (
+                            <div key={f} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                              <div style={{ width: 14, height: 14, borderRadius: "50%", background: plan.gradient, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                <Icon name="Check" size={8} style={{ color: "#fff" }} />
+                              </div>
+                              <span style={{ fontSize: 11, color: "#7a6a5a" }}>{f}</span>
+                            </div>
+                          ))}
+                          <button style={{ width: "100%", padding: "10px", borderRadius: 12, marginTop: 14, fontSize: 12, fontWeight: 700, border: "none", cursor: isActive ? "default" : "pointer", transition: "all 0.2s",
+                            ...(isActive
+                              ? { background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff" }
+                              : { backgroundColor: "#faf4ec", color: "#f97316", border: "1.5px solid #f0e6d3" })
+                          }}
+                            onMouseEnter={(e) => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.background = plan.gradient; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; (e.currentTarget as HTMLButtonElement).style.border = "none"; }}}
+                            onMouseLeave={(e) => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.background = ""; (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#faf4ec"; (e.currentTarget as HTMLButtonElement).style.color = "#f97316"; (e.currentTarget as HTMLButtonElement).style.border = "1.5px solid #f0e6d3"; }}}>
+                            {isActive ? "✓ Текущий" : "Перейти →"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
